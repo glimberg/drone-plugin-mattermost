@@ -40,7 +40,7 @@ func main() {
 
 	maxRetryCount, err := strconv.Atoi(maxRetry.Value)
 	if err != nil {
-		panic(err)
+		maxRetryCount = 0
 	}
 	if maxRetryCount == 0 {
 		maxRetryCount = 3
