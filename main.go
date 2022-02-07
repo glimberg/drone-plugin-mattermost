@@ -59,7 +59,9 @@ func main() {
 		emoji = " ❌"
 	}
 	msg := fmt.Sprintf(`CI build: %s (branch: %s) (stage: %s)
-commit: %s (%s:%s)
+commit: [click to see diff](%s) 
+author: %s
+commit message: %s
 event: %s:%s
 %s%s`,
 		repoFullname, commitBranch, stageName,
