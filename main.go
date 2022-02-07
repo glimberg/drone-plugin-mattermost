@@ -56,7 +56,7 @@ func main() {
 	}
 	emoji := " ✅"
 	if strings.Contains(buildStatus.Value, "failure") {
-		emoji = " ⚠️"
+		emoji = " ❌"
 	}
 	msg := fmt.Sprintf(`CI build: %s (branch: %s) (stage: %s)
 commit: %s (%s:%s)
