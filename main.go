@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mattermost/mattermost-server/v5/model"
 )
 
 func init() {
@@ -35,8 +36,7 @@ func init() {
 
 // report things: repo(name),time,commit(author/hash/msg),branch,build result(event/)
 func main() {
-	c := model.NewAPIv4Client(host.Value)
-	c.SetOAuthToken(token.Value)
+	c := &http.Client{}
 
 	maxRetryCount, err := strconv.Atoi(maxRetry.Value)
 	if err != nil {
@@ -58,19 +58,27 @@ event: %s:%s
 		buildEvent, buildNumber,
 		buildStatus, emoji)
 	osExitCode := 1
+
+	payload, err := json.Marshal(map[string]string{
+		"text":    msg,
+		"channel": channel.Value,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	for i := 0; i < maxRetryCount; i++ {
-		p, resp := c.CreatePost(&model.Post{
-			ChannelId: channel.Value,
-			Message:   msg,
-		})
-		if resp.Error == nil {
+		r, err := c.Post(fmt.Sprintf("%s/hooks/%s", host, token), "application/json", bytes.NewBuffer(payload))
+		if err != nil {
+			log.Printf("create post failed (i:%d), %v", i, err.Error())
+			time.Sleep(time.Duration(i) * time.Second)
+			continue
+		}
+		if r.StatusCode == http.StatusOK {
 			osExitCode = 0
-			log.Println("post success, id:", p.Id)
+			log.Println("post success")
 			break
 		}
-		log.Printf("create post failed (i:%d), %v", i, resp.Error)
-		time.Sleep(time.Duration(i) * time.Second)
-		continue
 	}
 	os.Exit(osExitCode)
 }
