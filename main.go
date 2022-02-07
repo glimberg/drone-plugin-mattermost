@@ -30,6 +30,7 @@ func init() {
 		&buildEvent,
 		&buildStatus,
 		&buildNumber,
+		&stageName,
 	} {
 		x.Value = os.Getenv(x.EnvVar)
 	}
@@ -55,13 +56,13 @@ func main() {
 	}
 	emoji := " ✅"
 	if strings.Contains(buildStatus.Value, "failure") {
-		emoji = "⚠️"
+		emoji = " ⚠️"
 	}
-	msg := fmt.Sprintf(`CI build: %s (branch: %s)
-commit: %s(%s:%s)
+	msg := fmt.Sprintf(`CI build: %s (branch: %s) (stage: %s)
+commit: %s (%s:%s)
 event: %s:%s
 %s%s`,
-		repoFullname, commitBranch,
+		repoFullname, commitBranch, stageName,
 		commitLink, commitAuthorName, commitMessage,
 		buildEvent, buildNumber,
 		buildStatus, emoji)
@@ -75,8 +76,11 @@ event: %s:%s
 		panic(err)
 	}
 
+	url := fmt.Sprintf("%s/hooks/%s", host, token)
+
 	for i := 0; i < maxRetryCount; i++ {
-		r, err := c.Post(fmt.Sprintf("%s/hooks/%s", host, token), "application/json", bytes.NewBuffer(payload))
+		fmt.Printf("Posting to %s: %s\n", url, string(payload))
+		r, err := c.Post(url, "application/json", bytes.NewBuffer(payload))
 		if err != nil {
 			log.Printf("create post failed (i:%d), %v", i, err.Error())
 			time.Sleep(time.Duration(i) * time.Second)
@@ -86,6 +90,9 @@ event: %s:%s
 			osExitCode = 0
 			log.Println("post success")
 			break
+		} else {
+			log.Printf("status code: %d", r.StatusCode)
+			continue
 		}
 	}
 	os.Exit(osExitCode)
@@ -160,5 +167,10 @@ var (
 		Name:   "build.number",
 		Usage:  "build number",
 		EnvVar: "DRONE_BUILD_NUMBER",
+	}
+	stageName = env{
+		Name:   "stage.name",
+		Usage:  "drone stage name",
+		EnvVar: "DRONE_STAGE_NAME",
 	}
 )

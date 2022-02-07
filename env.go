@@ -54,6 +54,11 @@ var envList = []env{
 		Usage:  "repository is trusted",
 		EnvVar: "DRONE_REPO_TRUSTED",
 	},
+	{
+		Name:   "stage.name",
+		Usage:  "drone stage name",
+		EnvVar: "DRONE_STAGE_NAME",
+	},
 
 	// commit args
 
