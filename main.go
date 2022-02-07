@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -36,7 +37,14 @@ func init() {
 
 // report things: repo(name),time,commit(author/hash/msg),branch,build result(event/)
 func main() {
-	c := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	c := &http.Client{
+		Transport: tr,
+	}
 
 	maxRetryCount, err := strconv.Atoi(maxRetry.Value)
 	if err != nil {
